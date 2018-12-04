@@ -8,11 +8,13 @@ import (
 
 var (
 	LayoutDir   string = "views/layouts/"
+	TemplateDir string = "views/"
 	TemplateExt string = ".gohtml"
 )
 
 // NewView returns a template and a layout to wrap the template
 func NewView(layout string, files ...string) *View {
+	addTemplatePath(files)
 	files = append(files, layoutFiles()...)
 	t, err := template.ParseFiles(files...)
 	if err != nil {
@@ -49,4 +51,10 @@ func layoutFiles() []string {
 		panic(err)
 	}
 	return files
+}
+
+func addTemplatePath(files []string) {
+	for i, f := range files {
+		files[i] = TemplateDir + f + TemplateExt
+	}
 }
