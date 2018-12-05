@@ -16,7 +16,7 @@ var (
 type User struct {
 	gorm.Model
 	Name  string
-	Email string `gorm:"not null;unqiue_index"`
+	Email string `gorm:"not null;unique_index"`
 }
 
 func NewUserService(connectionInfo string) (*UserService, error) {
@@ -100,7 +100,17 @@ func (us *UserService) Update(user *User) error {
 }
 
 // DesctructiveReset drops the user table and rebuilds it
-func (us *UserService) DesctructiveReset() {
-	us.db.DropTableIfExists(&User{})
-	us.db.AutoMigrate(&User{})
+func (us *UserService) DesctructiveReset() error {
+	if err := us.db.DropTableIfExists(&User{}).Error; err != nil {
+		return err
+	}
+	return us.AutoMigrate()
+}
+
+// AutoMigrate will attempt to automigrate the users table
+func (us *UserService) AutoMigrate() error {
+	if err := us.db.AutoMigrate(&User{}).Error; err != nil {
+		return err
+	}
+	return nil
 }
