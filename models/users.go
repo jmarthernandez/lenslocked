@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/jinzhu/gorm"
+	// needed for postgres
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
