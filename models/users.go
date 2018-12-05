@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	ErrNotFound = errors.New("models: resource not found")
+	ErrNotFound  = errors.New("models: resource not found")
+	ErrInvalidID = errors.New("models: ID provided was invalid")
 )
 
 type User struct {
@@ -57,12 +58,34 @@ func (us *UserService) ByEmail(email string) (*User, error) {
 
 }
 
+func first(db *gorm.DB, dst interface{}) error {
+	err := db.First(dst).Error
+	switch err {
+	case nil:
+		return nil
+	case gorm.ErrRecordNotFound:
+		return ErrNotFound
+	default:
+		return err
+	}
+}
+
 // Create will create a User and return the ID
 // 1 - user, nil
 // 2 - nil, ErrNotFound
 // 3 - nil, otherError
 func (us *UserService) Create(user *User) error {
 	return us.db.Create(&user).Error
+}
+
+// Delete will delete a User
+func (us *UserService) Delete(id uint) error {
+	// stupid gorm will drop the entire table if id is 0
+	if id == 0 {
+		return ErrInvalidID
+	}
+	user := User{Model: gorm.Model{ID: id}}
+	return us.db.Delete(&user).Error
 }
 
 // Close will close UserService db connection
@@ -80,16 +103,4 @@ func (us *UserService) Update(user *User) error {
 func (us *UserService) DesctructiveReset() {
 	us.db.DropTableIfExists(&User{})
 	us.db.AutoMigrate(&User{})
-}
-
-func first(db *gorm.DB, user *User) error {
-	err := db.First(user).Error
-	switch err {
-	case nil:
-		return nil
-	case gorm.ErrRecordNotFound:
-		return ErrNotFound
-	default:
-		return err
-	}
 }
