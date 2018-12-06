@@ -11,8 +11,12 @@ import (
 )
 
 var (
-	ErrNotFound  = errors.New("models: resource not found")
+	// ErrNotFound is returned when resource can not be found
+	ErrNotFound = errors.New("models: resource not found")
+	// ErrInvalidID is returned when provided ID is invalid
 	ErrInvalidID = errors.New("models: ID provided was invalid")
+	// ErrInvalidPassword is returned when provided password is invalid
+	ErrInvalidPassword = errors.New("models: Password provided was invalid")
 )
 
 type User struct {
@@ -59,7 +63,28 @@ func (us *UserService) ByEmail(email string) (*User, error) {
 	db := us.db.Where("email = ?", email)
 	err := first(db, &user)
 	return &user, err
+}
 
+// Authenticate will auth a user with provided email and password
+// 1 - user, nil
+// 2 - nil, ErrNotFound
+// 3 - nil, otherError
+func (us *UserService) Authenticate(email, password string) (*User, error) {
+	foundUser, err := us.ByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(foundUser.PasswordHash), []byte(password))
+	if err != nil {
+		switch err {
+		case bcrypt.ErrMismatchedHashAndPassword:
+			return nil, ErrInvalidPassword
+		default:
+			return nil, err
+		}
+	}
+	return foundUser, nil
 }
 
 func first(db *gorm.DB, dst interface{}) error {

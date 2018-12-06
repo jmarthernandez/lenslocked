@@ -26,7 +26,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	us.DesctructiveReset()
+	us.AutoMigrate()
 	defer us.Close()
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers(us)
@@ -34,8 +34,10 @@ func main() {
 	r := mux.NewRouter()
 	r.Handle("/", staticC.Home).Methods("GET")
 	r.Handle("/contact", staticC.Contact).Methods("GET")
-	r.HandleFunc("/signup", usersC.New).Methods("GET")
+	r.Handle("/signup", usersC.NewView).Methods("GET")
 	r.HandleFunc("/signup", usersC.Create).Methods("POST")
+	r.Handle("/login", usersC.LoginView).Methods("GET")
+	r.HandleFunc("/login", usersC.Login).Methods("POST")
 	fmt.Println("starting on 3000")
 	http.ListenAndServe(":3030", r)
 }
