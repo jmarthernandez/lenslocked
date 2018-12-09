@@ -91,13 +91,17 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 
 // CookieTest is used to display cookies set on the current user
 func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("email")
+	cookie, err := r.Cookie("remember_token")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintln(w, "Email is: ", cookie.Value)
-	fmt.Fprintln(w, cookie)
+	user, err := u.us.ByRemember(cookie.Value)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintln(w, user)
 }
 
 // signIn is used to sign user in via cookies
