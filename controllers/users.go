@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/lenslocked/models"
+	"github.com/lenslocked/rand"
 	"github.com/lenslocked/views"
 )
 
@@ -46,7 +47,11 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	signIn(w, &user)
+	err := u.signIn(w, &user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
 
@@ -76,7 +81,11 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
-	signIn(w, user)
+	err = u.signIn(w, user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
 
@@ -92,10 +101,22 @@ func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
 }
 
 // signIn is used to sign user in via cookies
-func signIn(w http.ResponseWriter, user *models.User) {
+func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {
+	if user.Remember == "" {
+		token, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+		user.RememberHash = token
+		err = u.us.Update(user)
+		if err != nil {
+			return err
+		}
+	}
 	cookie := http.Cookie{
-		Name:  "email",
-		Value: user.Email,
+		Name:  "remember_token",
+		Value: user.Remember,
 	}
 	http.SetCookie(w, &cookie)
+	return nil
 }

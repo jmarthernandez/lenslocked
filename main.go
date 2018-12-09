@@ -26,7 +26,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	us.AutoMigrate()
+	us.DesctructiveReset()
 	defer us.Close()
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers(us)
@@ -39,6 +39,6 @@ func main() {
 	r.Handle("/login", usersC.LoginView).Methods("GET")
 	r.HandleFunc("/login", usersC.Login).Methods("POST")
 	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
-	fmt.Println("starting on 3000")
+	fmt.Println("starting on 3030")
 	http.ListenAndServe(":3030", r)
 }
